@@ -6,6 +6,7 @@ from matplotlib.widgets import Button
 import random
 import numpy as np
 from matplotlib.lines import Line2D
+from matplotlib.patches import Rectangle
 
 try:
     import serial
@@ -13,10 +14,12 @@ except ImportError:
     WITH_SERIAL = False
 else:
     WITH_SERIAL = True
-    
+
+GOAL_VALUE = 200
+
 SIMULATED_VALUE = 0.05  # modifié pour partir a zéro
 DEL_SIMULATED = 0.005   
-RANDOM_WALK_CRIT = 0.2 # probabilite de descendre
+RANDOM_WALK_CRIT = 0.33 # probabilite de descendre
 # parmètres utilisés
 # pour simuler le port série
 # lorsque l'appareil n'est pas branché, cf read_volts_without_serial()
@@ -80,7 +83,7 @@ def display_current(val):
             bbox={'facecolor':'white', 'pad':10}, transform=ax.transAxes)
 
 def display_max(val):
-    ax.text(0.3, 0.25, "%6.0f lbs max" %val, family ='monospace', fontsize=20,
+    ax.text(0.1, 0.05, "%6.0f lbs max" %val, family ='monospace', fontsize=20,
             bbox={'facecolor':'white', 'pad':10}, transform=ax.transAxes)
 
 def close_port_quit(self):
@@ -109,6 +112,8 @@ line1.set_marker('o')
 ax.add_line(line1)
 #ax.set_ylim(MIN_GRAPH, MAX_GRAPH)
 #ax.set_xlim(0,GRAPH_WIDTH)
+rect = Rectangle( (0, GOAL_VALUE), width=GRAPH_WIDTH, height=12)
+ax.add_patch(rect)
 
 plt.ion()
 
