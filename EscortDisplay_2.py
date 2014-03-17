@@ -15,7 +15,7 @@ except ImportError:
 else:
     WITH_SERIAL = True
 
-GOAL_VALUE = 200
+GOAL_VALUE = 250
 
 SIMULATED_VALUE = 0.05  # modifié pour partir a zéro
 DEL_SIMULATED = 0.005   
@@ -26,9 +26,9 @@ RANDOM_WALK_CRIT = 0.33 # probabilite de descendre
 
 
 MIN_GRAPH = 0   # modifié pour partir a zéro
-MAX_GRAPH = 250  # modifié
+GRAPH_MAX_FORCE_INIT = 400  # modifié
+GRAPH_FORCE_MAX_MARGIN = 0.15 # 15%
 GRAPH_WIDTH = 100
-but = 250       # but : charge a atteindre pour passer en 1ere place
 
 
 PROMPT_SEQU = '\r\n=>\r\n'
@@ -78,12 +78,12 @@ def to_lbs(volts):
     F=A*psi
     return F
 
-def display_current(val):
-    ax.text(0.3, 0.5, "%6.0f lbs" %val, family ='monospace', fontsize=20,
-            bbox={'facecolor':'white', 'pad':10}, transform=ax.transAxes)
+#def display_current(val):
+#    ax.text(0.3, 0.5, "%6.0f lbs" %val, family ='monospace', fontsize=20,
+#            bbox={'facecolor':'white', 'pad':10}, transform=ax.transAxes)
 
 def display_max(val):
-    ax.text(0.1, 0.05, "%6.0f lbs max" %val, family ='monospace', fontsize=20,
+    ax.text(0.65, 0.03, "%6.0f lbs max" %val, family ='monospace', fontsize=20,
             bbox={'facecolor':'white', 'pad':10}, transform=ax.transAxes)
 
 def close_port_quit(self):
@@ -110,9 +110,9 @@ line1 = Line2D([], [], color='black', linewidth=2)
 line1.set_linestyle('None')
 line1.set_marker('o')
 ax.add_line(line1)
-#ax.set_ylim(MIN_GRAPH, MAX_GRAPH)
+#ax.set_ylim(MIN_GRAPH, GRAPH_MAX_FORCE_INIT)
 #ax.set_xlim(0,GRAPH_WIDTH)
-rect = Rectangle( (0, GOAL_VALUE), width=GRAPH_WIDTH, height=12)
+rect = Rectangle( (0, GOAL_VALUE), width=GRAPH_WIDTH, height=10) #todo : height relatif
 ax.add_patch(rect)
 
 plt.ion()
@@ -126,16 +126,14 @@ bClose.on_clicked(close_port_quit)
 
 forces = []
 force_max=0
-
 END_LOOP = False
 while not END_LOOP:
     force = to_lbs(read_volts())
-    if force > force_max:
-        force_max = force
-    ax.set_ylim(MIN_GRAPH, MAX_GRAPH)  # deplacé
-    ax.set_xlim(0,GRAPH_WIDTH)  #déplacé
-#    t1=np.linspace(0,GRAPH_WIDTH,20)  # ajout ne fonctionne pas
-#    plt.plot(t1, t1*0+ but, 'b-') # ajout ne fonctionne pas
+    force_max = max(force, force_max) #plus compact que if then
+    display_max(force_max)
+    graph_max_force = max(GRAPH_MAX_FORCE_INIT, force_max*(1 + GRAPH_FORCE_MAX_MARGIN) )
+    ax.set_ylim(MIN_GRAPH, graph_max_force)
+    ax.set_xlim(0, GRAPH_WIDTH)
     forces.append(force)
     line1.set_ydata(forces) 
     x = range(len(forces))
@@ -143,10 +141,10 @@ while not END_LOOP:
     plt.draw()
     if len(forces) > GRAPH_WIDTH:
         forces = []
-    if force_max > 250:    # ajout
-        MAX_GRAPH = force_max + 100 #ajout pour auto ajustement de l'axe y
-    display_current(force)
-    display_max(force_max)
+
+#    if force_max > 250:    # ajout -> 250?
+#        GRAPH_MAX_FORCE_INIT = force_max + 100 #ajout pour auto ajustement de l'axe y
+#    display_current(force)
 
 #    time.sleep(0.05) #choke
     plt.pause(0.1)
